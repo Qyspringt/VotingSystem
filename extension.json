@@ -1,0 +1,167 @@
+{
+    "manifest_version": 2,
+    "name": "VotingSystem",
+    "version": "1.0.0",
+    "author": "QiuxiMeow",
+    "descriptionmsg": "votingsystem-desc",
+    "license-name": "GPL-2.0-or-later",
+    "type": "specialpage",
+    "requires": {
+        "MediaWiki": ">= 1.43.0"
+    },
+    "AutoloadNamespaces": {
+        "MediaWiki\\Extension\\VotingSystem\\": "src/"
+    },
+    "HookHandlers": {
+        "main": {
+            "class": "MediaWiki\\Extension\\VotingSystem\\HookHandler"
+        }
+    },
+    "Hooks": {
+        "LoadExtensionSchemaUpdates": "main",
+        "ParserFirstCallInit": "main",
+        "BeforePageDisplay": "main",
+        "SkinAfterContent": "main"
+    },
+    "LogTypes": [ "voting" ],
+    "LogNames": {
+        "voting": "voting-log-name"
+    },
+    "LogHeaders": {
+        "voting": "voting-log-header"
+    },
+    "LogActions": {
+        "voting/revoke": "voting-log-action-revoke"
+    },
+    "APIModules": {
+        "voting": "MediaWiki\\Extension\\VotingSystem\\ApiVote",
+        "votingdetails": "MediaWiki\\Extension\\VotingSystem\\ApiVotingDetails",
+        "votingdelete": "MediaWiki\\Extension\\VotingSystem\\ApiVotingDelete"
+    },
+    "SpecialPages": {
+        "Vote": "MediaWiki\\Extension\\VotingSystem\\SpecialVote",
+        "GlobalVotingScores": "MediaWiki\\Extension\\VotingSystem\\SpecialGlobalVotingScores",
+        "MonthlyNewPageScores": "MediaWiki\\Extension\\VotingSystem\\SpecialMonthlyNewPageScores",
+        "SubmitRewriteRequest": "MediaWiki\\Extension\\VotingSystem\\SpecialSubmitRewriteRequest",
+        "ReviewRewriteRequests": "MediaWiki\\Extension\\VotingSystem\\SpecialReviewRewriteRequests"
+    },
+    "MessagesDirs": {
+        "VotingSystem": [ "i18n" ]
+    },
+    "ResourceModules": {
+        "ext.voting": {
+            "scripts": [ "resources/ext.voting.js" ],
+            "styles": [ "resources/ext.voting.css" ],
+            "messages": [
+                "votingsystem-vote-success",
+                "votingsystem-vote-error",
+                "votingsystem-vote-login-required",
+                "votingsystem-vote-existing",
+                "votingsystem-vote-autoconfirmed-required",
+                "votingsystem-vote-rate-limited",
+                "votingsystem-vote-comment-required",
+                "votingsystem-vote-no-comment-hint",
+                "votingsystem-vote-comment-placeholder",
+                "votingsystem-vote-comment-title",
+                "votingsystem-vote-submit",
+                "votingsystem-vote-submit-with-comment",
+                "votingsystem-vote-cancel",
+                "votingsystem-vote-comment-prompt",
+                "votingsystem-vote-weight-info",
+                "votingsystem-vote-hide-score",
+                "votingsystem-vote-title-score",
+                "votingsystem-vote-title-hidden",
+                "votingsystem-panel-title",
+                "votingsystem-panel-login",
+                "votingsystem-panel-details-toggle",
+                "votingsystem-panel-details-hide",
+                "votingsystem-panel-details-loading",
+                "votingsystem-panel-details-error",
+                "votingsystem-panel-details-empty",
+                "votingsystem-panel-details-user",
+                "votingsystem-panel-details-value",
+                "votingsystem-panel-details-weight",
+                "votingsystem-panel-details-time",
+                "votingsystem-panel-details-delete",
+                "votingsystem-panel-details-delete-confirm",
+                "votingsystem-panel-details-delete-error"
+            ],
+            "dependencies": [ "mediawiki.api", "mediawiki.util" ]
+        }
+    },
+    "ResourceFileModulePaths": {
+        "localBasePath": "",
+        "remoteExtPath": "VotingSystem"
+    },
+    "AvailableRights": [
+        "voting",
+        "voting-review",
+        "voting-delete",
+        "voting-verified"
+    ],
+    "GroupPermissions": {
+        "autoconfirmed": {
+            "voting": true
+        },
+        "verified": {
+            "voting-verified": true,
+            "voting": true
+        },
+        "rollbacker": {
+            "voting": true
+        },
+        "patroller": {
+            "voting": true
+        },
+        "sysop": {
+            "voting": true,
+            "voting-review": true,
+            "voting-delete": true
+        },
+        "bureaucrat": {
+            "voting": true,
+            "voting-review": true,
+            "voting-delete": true
+        }
+    },
+    "RateLimits": {
+        "voting-hourly": {
+            "user": [ 10, 3600 ],
+            "ip": [ 3, 3600 ]
+        },
+        "voting-daily": {
+            "user": [ 50, 86400 ],
+            "ip": [ 10, 86400 ]
+        }
+    },
+    "config": {
+        "VotingSystemDefaultLimit": {
+            "value": 100,
+            "description": "Default number of rows shown when embedded."
+        },
+        "VotingSystemBaseWeightByGroup": {
+            "value": {
+                "default": 1.0,
+                "autoconfirmed": 1.0,
+                "verified": 1.5,
+                "rollbacker": 2.0,
+                "patroller": 2.0,
+                "sysop": 2.5,
+                "bureaucrat": 3.0
+            },
+            "description": "Base vote weight by user group (without comment)."
+        },
+        "VotingSystemCommentBonus": {
+            "value": 2.0,
+            "description": "Weight bonus added when a vote is accompanied by a comment."
+        },
+        "VotingSystemNoCommentWeight": {
+            "value": 0.2,
+            "description": "Fixed weight for any vote without a comment."
+        },
+        "VotingSystemRequireComment": {
+            "value": false,
+            "description": "If true, comments are mandatory for voting."
+        }
+    }
+}
