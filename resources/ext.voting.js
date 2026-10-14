@@ -9,17 +9,14 @@
         if ( !anchor ) {
             return;
         }
-
         var bodyContent = document.querySelector( '.mw-body-content' );
         if ( !bodyContent ) {
             return;
         }
-
         if ( anchor.parentNode === bodyContent
             && bodyContent.lastElementChild === anchor ) {
             return;
         }
-
         bodyContent.appendChild( anchor );
     }
 
@@ -31,6 +28,37 @@
         for ( var i = 1; i < panels.length; i++ ) {
             panels[ i ].remove();
         }
+    }
+
+    /**
+     * 登录提示由前端渲染，避免污染 parser cache。
+     */
+    function initLoginNotice() {
+        if ( mw.config.get( 'wgVotingUserRegistered' ) === true ) {
+            return;
+        }
+        var loginUrl = mw.config.get( 'wgVotingLoginUrl' ) || '';
+        var slots = document.querySelectorAll( '.voting-panel-login-slot' );
+        slots.forEach( function ( slot ) {
+            if ( slot.getAttribute( 'data-filled' ) === '1' ) {
+                return;
+            }
+            slot.setAttribute( 'data-filled', '1' );
+
+            var wrap = document.createElement( 'div' );
+            wrap.className = 'voting-panel-login';
+
+            var text = document.createElement( 'span' );
+            text.textContent = mw.msg( 'votingsystem-panel-login' ) + ' ';
+
+            var link = document.createElement( 'a' );
+            link.href = loginUrl;
+            link.textContent = mw.msg( 'login' );
+
+            wrap.appendChild( text );
+            wrap.appendChild( link );
+            slot.appendChild( wrap );
+        } );
     }
 
     function initDetailsToggle() {
@@ -68,9 +96,6 @@
         } );
     }
 
-    /**
-     * 加载当前用户的状态：是否显示详情按钮、是否高亮已投票按钮
-     */
     function loadUserState( pageId, panel ) {
         var api = new mw.Api();
         api.get( {
@@ -83,7 +108,6 @@
                 return;
             }
 
-            // 显示详情按钮（有权限时）
             if ( details.canView === 1 || details.canView === true ) {
                 var slot = panel.querySelector( '.voting-panel-details-button-slot' );
                 if ( slot && !slot.querySelector( '.voting-panel-toggle' ) ) {
@@ -97,7 +121,6 @@
                 }
             }
 
-            // 高亮当前用户的投票
             var myVote = details.myVote;
             if ( myVote !== null && myVote !== undefined ) {
                 var buttons = panel.querySelectorAll( '.voting-btn' );
@@ -224,6 +247,7 @@
     function initVotePanels() {
         repositionPanel();
         dedupePanels();
+        initLoginNotice();
         initDetailsToggle();
 
         var panels = document.querySelectorAll( '.voting-panel' );
@@ -249,7 +273,6 @@
                 } );
             } );
 
-            // 加载当前用户状态
             loadUserState( pageId, panel );
         } );
     }

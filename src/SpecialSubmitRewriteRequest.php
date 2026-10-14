@@ -78,7 +78,11 @@ class SpecialSubmitRewriteRequest extends SpecialPage {
             ];
 
             $out->addHTML( '<table class="wikitable">' );
-            $out->addHTML( '<tr><th>页面</th><th>状态</th><th>申请时间</th></tr>' );
+            $out->addHTML( '<tr>'
+                . '<th>' . $this->msg( 'votingsystem-rewrite-table-page' )->escaped() . '</th>'
+                . '<th>' . $this->msg( 'votingsystem-rewrite-table-status' )->escaped() . '</th>'
+                . '<th>' . $this->msg( 'votingsystem-rewrite-table-time' )->escaped() . '</th>'
+                . '</tr>' );
 
             foreach ( $requests as $req ) {
                 $title = Title::newFromID( (int)$req->request_page_id );
@@ -95,7 +99,7 @@ class SpecialSubmitRewriteRequest extends SpecialPage {
         }
     }
 
-    public function onSubmit( array $data ): bool {
+    public function onSubmit( array $data ) {
         $user = $this->getUser();
         $title = Title::newFromText( $data['page'] );
 
@@ -138,7 +142,9 @@ class SpecialSubmitRewriteRequest extends SpecialPage {
             __METHOD__
         );
 
-        $this->getOutput()->addWikiMsg( 'votingsystem-rewrite-submitted' );
+        $this->getOutput()->redirect(
+            $this->getPageTitle()->getFullURL( [ 'submitted' => 1 ] )
+        );
         return true;
     }
 

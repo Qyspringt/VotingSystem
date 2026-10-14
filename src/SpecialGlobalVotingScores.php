@@ -49,6 +49,7 @@ class SpecialGlobalVotingScores extends SpecialPage {
         $lb = MediaWikiServices::getInstance()->getDBLoadBalancer();
         $dbr = $lb->getConnection( DB_REPLICA );
 
+        // 遍历所有主命名空间、非重定向页面
         $res = $dbr->select(
             'page',
             [ 'page_id', 'page_namespace', 'page_title' ],
@@ -59,7 +60,6 @@ class SpecialGlobalVotingScores extends SpecialPage {
             __METHOD__
         );
 
-        // 一次性读取排除名单，避免循环里反复读 MediaWiki 页面
         $excludedList = VotingCalculator::getExcludedPageList();
 
         $pageIds = [];
@@ -70,7 +70,11 @@ class SpecialGlobalVotingScores extends SpecialPage {
                 (int)$row->page_namespace,
                 $row->page_title
             );
+            if ( !$title ) {
+                continue;
+            }
 
+            // 只保留评分根页面（子页面聚合到根页面）
             $rootId = VotingCalculator::getScoringRootIdForTitle( $title );
             if ( $rootId !== $pid ) {
                 continue;
@@ -85,30 +89,21 @@ class SpecialGlobalVotingScores extends SpecialPage {
         }
 
         if ( empty( $pageIds ) ) {
-            $out->addHTML( '<p>' . $this->msg( 'votingsystem-no-votes' )->text() . '</p>' );
+            $out->addHTML( '<p>' . $this->msg( 'votingsystem-no-votes' )->escaped() . '</p>' );
             return;
         }
 
+        // 一次批量算分；没票的页面在 $scores 里对应 null
         $scores = VotingCalculator::calculateScores( $pageIds );
 
         $rows = [];
         foreach ( $pageIds as $pid ) {
-            if ( !isset( $pageTitles[$pid] ) ) {
-                continue;
-            }
             $data = $scores[$pid] ?? [ 'score' => null, 'voteCount' => 0 ];
-            $score = $data['score'];
-            $voteCount = $data['voteCount'];
-
-            if ( $score === null ) {
-                $score = 0.0;
-            }
-
             $rows[] = [
                 'pageId' => $pid,
                 'title' => $pageTitles[$pid],
-                'score' => $score,
-                'voteCount' => $voteCount,
+                'score' => $data['score'] ?? 0.0,
+                'voteCount' => $data['voteCount'],
             ];
         }
 
@@ -151,10 +146,10 @@ class SpecialGlobalVotingScores extends SpecialPage {
 
         $html .= '<table class="wikitable voting-scores-table">';
         $html .= '<thead><tr>';
-        $html .= '<th>' . htmlspecialchars( $this->msg( 'votingsystem-table-rank' )->text() ) . '</th>';
-        $html .= '<th>' . htmlspecialchars( $this->msg( 'votingsystem-table-page' )->text() ) . '</th>';
-        $html .= '<th>' . htmlspecialchars( $this->msg( 'votingsystem-table-score' )->text() ) . '</th>';
-        $html .= '<th>' . htmlspecialchars( $this->msg( 'votingsystem-table-votecount' )->text() ) . '</th>';
+        $html .= '<th>' . $this->msg( 'votingsystem-table-rank' )->escaped() . '</th>';
+        $html .= '<th>' . $this->msg( 'votingsystem-table-page' )->escaped() . '</th>';
+        $html .= '<th>' . $this->msg( 'votingsystem-table-score' )->escaped() . '</th>';
+        $html .= '<th>' . $this->msg( 'votingsystem-table-votecount' )->escaped() . '</th>';
         $html .= '</tr></thead><tbody>';
 
         foreach ( $displayRows as $i => $row ) {
@@ -167,7 +162,7 @@ class SpecialGlobalVotingScores extends SpecialPage {
             $html .= '<td>' . $rank . '</td>';
             $html .= '<td>' . $link . '</td>';
             $html .= '<td>' . htmlspecialchars( (string)$row['score'] ) . '</td>';
-            $html .= '<td>' . $row['voteCount'] . '</td>';
+            $html .= '<td>' . (int)$row['voteCount'] . '</td>';
             $html .= '</tr>';
         }
 

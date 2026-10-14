@@ -92,20 +92,13 @@ class SpecialMonthlyNewPageScores extends SpecialPage {
             if ( !isset( $pageTitles[$pid] ) ) {
                 continue;
             }
-
             $data = $scores[$pid] ?? [ 'score' => null, 'voteCount' => 0 ];
-            $score = $data['score'];
-            $voteCount = $data['voteCount'];
-
-            if ( $score === null ) {
-                $score = 0.0;
-            }
-
+            $score = $data['score'] ?? 0.0;
             $rows[] = [
                 'pageId' => $pid,
                 'title' => $pageTitles[$pid],
                 'score' => $score,
-                'voteCount' => $voteCount,
+                'voteCount' => $data['voteCount'],
             ];
         }
 
@@ -147,11 +140,11 @@ class SpecialMonthlyNewPageScores extends SpecialPage {
             $html .= '<div class="voting-controls">';
             $html .= '<a href="' . htmlspecialchars( $this->getPageTitle()->getLocalURL( [
                 'month' => $prevMonth, 'order' => $order, 'limit' => $limit
-            ] ) ) . '">← ' . $this->msg( 'votingsystem-prev-month' )->escaped() . '</a>';
+            ] ) ) . '">' . $this->msg( 'votingsystem-prev-month' )->escaped() . '</a>';
             $html .= ' | ';
             $html .= '<a href="' . htmlspecialchars( $this->getPageTitle()->getLocalURL( [
                 'month' => $nextMonth, 'order' => $order, 'limit' => $limit
-            ] ) ) . '">' . $this->msg( 'votingsystem-next-month' )->escaped() . ' →</a>';
+            ] ) ) . '">' . $this->msg( 'votingsystem-next-month' )->escaped() . '</a>';
             $html .= ' | ';
             $html .= '<a href="' . htmlspecialchars( $toggleUrl ) . '" class="voting-toggle-order">'
                 . htmlspecialchars( $toggleLabel ) . '</a>';
@@ -160,10 +153,10 @@ class SpecialMonthlyNewPageScores extends SpecialPage {
 
         $html .= '<table class="wikitable voting-scores-table">';
         $html .= '<thead><tr>';
-        $html .= '<th>' . htmlspecialchars( $this->msg( 'votingsystem-table-rank' )->text() ) . '</th>';
-        $html .= '<th>' . htmlspecialchars( $this->msg( 'votingsystem-table-page' )->text() ) . '</th>';
-        $html .= '<th>' . htmlspecialchars( $this->msg( 'votingsystem-table-score' )->text() ) . '</th>';
-        $html .= '<th>' . htmlspecialchars( $this->msg( 'votingsystem-table-votecount' )->text() ) . '</th>';
+        $html .= '<th>' . $this->msg( 'votingsystem-table-rank' )->escaped() . '</th>';
+        $html .= '<th>' . $this->msg( 'votingsystem-table-page' )->escaped() . '</th>';
+        $html .= '<th>' . $this->msg( 'votingsystem-table-score' )->escaped() . '</th>';
+        $html .= '<th>' . $this->msg( 'votingsystem-table-votecount' )->escaped() . '</th>';
         $html .= '</tr></thead><tbody>';
 
         foreach ( $displayRows as $i => $row ) {
@@ -176,7 +169,7 @@ class SpecialMonthlyNewPageScores extends SpecialPage {
             $html .= '<td>' . $rank . '</td>';
             $html .= '<td>' . $link . '</td>';
             $html .= '<td>' . htmlspecialchars( (string)$row['score'] ) . '</td>';
-            $html .= '<td>' . $row['voteCount'] . '</td>';
+            $html .= '<td>' . (int)$row['voteCount'] . '</td>';
             $html .= '</tr>';
         }
 

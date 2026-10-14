@@ -30,8 +30,8 @@ class SpecialReviewRewriteRequests extends SpecialPage {
         $lb = MediaWikiServices::getInstance()->getDBLoadBalancer();
 
         if ( in_array( $action, [ 'approve', 'reject' ], true ) && $requestId > 0 ) {
-            $token = $request->getVal( 'token', '' );
-            if ( !$user->matchEditToken( $token ) ) {
+            $csrfTokenSet = $this->getContext()->getCsrfTokenSet();
+            if ( !$csrfTokenSet->matchToken( $request->getVal( 'token', '' ) ) ) {
                 $out->addWikiMsg( 'votingsystem-review-invalid-token' );
                 return;
             }
@@ -84,9 +84,17 @@ class SpecialReviewRewriteRequests extends SpecialPage {
         }
 
         $linkRenderer = MediaWikiServices::getInstance()->getLinkRenderer();
+        $csrfTokenSet = $this->getContext()->getCsrfTokenSet();
+        $token = $csrfTokenSet->getToken();
 
         $out->addHTML( '<table class="wikitable">' );
-        $out->addHTML( '<tr><th>页面</th><th>申请人</th><th>理由</th><th>申请时间</th><th>操作</th></tr>' );
+        $out->addHTML( '<tr>'
+            . '<th>' . $this->msg( 'votingsystem-review-table-page' )->escaped() . '</th>'
+            . '<th>' . $this->msg( 'votingsystem-review-table-user' )->escaped() . '</th>'
+            . '<th>' . $this->msg( 'votingsystem-review-table-reason' )->escaped() . '</th>'
+            . '<th>' . $this->msg( 'votingsystem-review-table-time' )->escaped() . '</th>'
+            . '<th>' . $this->msg( 'votingsystem-review-table-actions' )->escaped() . '</th>'
+            . '</tr>' );
 
         foreach ( $pending as $req ) {
             $title = Title::newFromID( (int)$req->request_page_id );
@@ -95,7 +103,6 @@ class SpecialReviewRewriteRequests extends SpecialPage {
                 ? $linkRenderer->makeLink( $title, htmlspecialchars( $pageText ) )
                 : htmlspecialchars( $pageText );
 
-            $token = $user->getEditToken();
             $approveUrl = $this->getPageTitle()->getLocalURL( [
                 'action' => 'approve',
                 'requestid' => $req->request_id,
@@ -113,8 +120,10 @@ class SpecialReviewRewriteRequests extends SpecialPage {
             $out->addHTML( '<td>' . nl2br( htmlspecialchars( $req->request_reason ) ) . '</td>' );
             $out->addHTML( '<td>' . htmlspecialchars( wfTimestamp( TS_RFC2822, $req->request_timestamp ) ) . '</td>' );
             $out->addHTML( '<td>'
-                . '<a href="' . htmlspecialchars( $approveUrl ) . '" class="voting-review-approve">通过</a> | '
-                . '<a href="' . htmlspecialchars( $rejectUrl ) . '" class="voting-review-reject">拒绝</a>'
+                . '<a href="' . htmlspecialchars( $approveUrl ) . '" class="voting-review-approve">'
+                . $this->msg( 'votingsystem-review-approve' )->escaped() . '</a> | '
+                . '<a href="' . htmlspecialchars( $rejectUrl ) . '" class="voting-review-reject">'
+                . $this->msg( 'votingsystem-review-reject' )->escaped() . '</a>'
                 . '</td>' );
             $out->addHTML( '</tr>' );
         }

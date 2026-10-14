@@ -6,17 +6,14 @@ use MediaWiki\Hook\BeforePageDisplayHook;
 use MediaWiki\Hook\ParserFirstCallInitHook;
 use MediaWiki\Hook\SkinAfterContentHook;
 use MediaWiki\MediaWikiServices;
-use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\Title\Title;
 use Parser;
-use RequestContext;
 
 class HookHandler implements
     ParserFirstCallInitHook,
     BeforePageDisplayHook,
     SkinAfterContentHook
 {
-
     public static function onLoadExtensionSchemaUpdates( DatabaseUpdater $updater ): void {
         $base = dirname( __DIR__ ) . '/sql';
         $updater->addExtensionTable( 'voting_votes', "$base/voting_votes.sql" );
@@ -34,6 +31,11 @@ class HookHandler implements
         }
         $out->addModuleStyles( [ 'ext.voting' ] );
         $out->addModules( [ 'ext.voting' ] );
+        $user = $out->getUser();
+        $out->addJsConfigVars( [
+            'wgVotingUserRegistered' => $user->isRegistered(),
+            'wgVotingLoginUrl' => \MediaWiki\SpecialPage\SpecialPage::getTitleFor( 'Userlogin' )->getLocalURL(),
+        ] );
     }
 
     public function onSkinAfterContent( &$data, $skin ): void {
@@ -59,7 +61,6 @@ class HookHandler implements
         if ( $title->isRedirect() ) {
             return false;
         }
-
         $action = $out->getRequest()->getVal( 'action', 'view' );
         if ( $action !== 'view' ) {
             return false;
@@ -84,13 +85,6 @@ class HookHandler implements
         return self::buildVotePanelHtml( $pageId );
     }
 
-    /**
-     * 生成投票面板 HTML。
-     *
-     * 注意：此 HTML 会被 parser cache 缓存。
-     * 因此不能输出任何与当前用户相关的状态（如"已投票高亮"、
-     * "查看详情按钮"），这些都交由前端 JS 通过 API 拉取。
-     */
     public static function buildVotePanelHtml( int $pageId ): string {
         $title = Title::newFromID( $pageId );
         if ( !$title ) {
@@ -117,8 +111,6 @@ class HookHandler implements
         $html .= '<div class="voting-panel-title">'
             . htmlspecialchars( wfMessage( 'votingsystem-panel-title' )->text() )
             . '</div>';
-
-        // 详情按钮容器：内容由 JS 决定是否显示
         $html .= '<span class="voting-panel-details-button-slot"></span>';
         $html .= '</div>';
 
@@ -130,7 +122,6 @@ class HookHandler implements
         $html .= '</div>';
         $html .= '<div class="voting-panel-message"></div>';
 
-        // 详情容器：内容由 JS 填充
         $html .= '<div class="voting-panel-details" style="display:none"></div>';
 
         if ( $scoringRootId !== $pageId ) {
@@ -145,17 +136,7 @@ class HookHandler implements
             }
         }
 
-        // 登录提示：对未登录用户显示
-        // MediaWiki 的 parser cache 默认不跨登录状态共享，所以安全
-        $user = RequestContext::getMain()->getUser();
-        if ( !$user->isRegistered() ) {
-            $loginUrl = SpecialPage::getTitleFor( 'Userlogin' )->getLocalURL();
-            $html .= '<div class="voting-panel-login">'
-                . htmlspecialchars( wfMessage( 'votingsystem-panel-login' )->text() )
-                . ' <a href="' . htmlspecialchars( $loginUrl ) . '">'
-                . htmlspecialchars( wfMessage( 'login' )->text() )
-                . '</a></div>';
-        }
+        $html .= '<div class="voting-panel-login-slot"></div>';
 
         $html .= '</div>';
 

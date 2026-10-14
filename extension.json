@@ -48,6 +48,9 @@
     "MessagesDirs": {
         "VotingSystem": [ "i18n" ]
     },
+    "ExtensionMessagesFiles": {
+        "VotingSystemAlias": "VotingSystem.alias.php"
+    },
     "ResourceModules": {
         "ext.voting": {
             "scripts": [ "resources/ext.voting.js" ],
@@ -84,7 +87,8 @@
                 "votingsystem-panel-details-time",
                 "votingsystem-panel-details-delete",
                 "votingsystem-panel-details-delete-confirm",
-                "votingsystem-panel-details-delete-error"
+                "votingsystem-panel-details-delete-error",
+                "login"
             ],
             "dependencies": [ "mediawiki.api", "mediawiki.util" ]
         }
